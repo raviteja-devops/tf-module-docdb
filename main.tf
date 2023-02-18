@@ -51,9 +51,22 @@ resource "aws_docdb_cluster" "docdb" {
     { Name = "${var.env}-docdb-cluster" }
   )
 }
-
 # skip_final_snapshot in organization must be false, it takes backup before delete
 # pickup username and password from parameter store
 # we declared at aws-parameters.yml
 # and declared that parameters in data.tf
 # and using it in here
+
+
+resource "aws_docdb_cluster_instance" "cluster_instances" {
+  count              = var.number_of_instances
+  identifier         = "${var.env}-docdb-cluster-instances-${count.index + 1}"
+  cluster_identifier = aws_docdb_cluster.docdb.id
+  instance_class     = var.instance_class
+  tags = merge(
+    local.common_tags,
+    { Name = "${var.env}-docdb-cluster-instances-${count.index + 1}" }
+  )
+}
+# we are creating instances under cluster
+# count, number of instances and instance class are coming from the input
