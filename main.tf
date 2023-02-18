@@ -45,12 +45,18 @@ resource "aws_docdb_cluster" "docdb" {
   skip_final_snapshot     = true
   db_subnet_group_name    = aws_docdb_subnet_group.default.name
   vpc_security_group_ids  = [aws_security_group.docdb.id]
+  storage_encrypted       = true
+  kms_key_id              = data.aws_kms_key.key.arn
 
   tags = merge(
     local.common_tags,
     { Name = "${var.env}-docdb-cluster" }
   )
 }
+# storage_encrypted must always be true, decrypted by our account only
+# to encrypt we need a key, aws key management service
+# we get kms key id from data.tf
+
 # skip_final_snapshot in organization must be false, it takes backup before delete
 # pickup username and password from parameter store
 # we declared at aws-parameters.yml
@@ -63,6 +69,8 @@ resource "aws_docdb_cluster_instance" "cluster_instances" {
   identifier         = "${var.env}-docdb-cluster-instances-${count.index + 1}"
   cluster_identifier = aws_docdb_cluster.docdb.id
   instance_class     = var.instance_class
+  storage_encrypted       = true
+  kms_key_id              = data.aws_kms_key.key.arn
   tags = merge(
     local.common_tags,
     { Name = "${var.env}-docdb-cluster-instances-${count.index + 1}" }
